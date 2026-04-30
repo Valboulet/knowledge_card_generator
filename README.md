@@ -1,16 +1,76 @@
-# React + Vite
+# Knowledge Card Generator
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+POC de génération automatique de knowledge cards structurées pour agents IA et consultants métier.
 
-Currently, two official plugins are available:
+## Concept
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Transforme n'importe quelle source de contenu (formation, transcript, retour d'expérience, propale) en knowledge card au format Markdown + frontmatter YAML, optimisée pour le RAG et lisible par un humain.
 
-## React Compiler
+## Fonctionnalités
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Import multi-formats : PDF, DOCX, PPTX, XLSX, CSV, HTML, TXT, MD
+- Glisser-déposer ou sélection de fichier
+- Génération structurée via LLM (Gemini 2.5 Flash Lite)
+- Format de sortie : Markdown + frontmatter YAML (optimisé RAG)
+- Anonymisation optionnelle des noms propres
+- Scores de qualité : clarté, densité, actionabilité
+- Affichage des métadonnées : domaine, niveau, confiance, résumé agent
+- Copie du Markdown complet (avec YAML) en un clic
 
-## Expanding the ESLint configuration
+## Structure d'une knowledge card
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```yaml
+---
+domaine: [détecté automatiquement]
+sous-domaine: [précision]
+niveau: junior | confirmé | senior
+tags: [tag1, tag2, tag3]
+prerequis: [concept1, concept2]
+statut: brouillon
+confiance: [1-5]
+resume-agent: [1 phrase pour le retrieval sémantique]
+---
+```
+
+Suivi du corps Markdown en 6 sections :
+- Essence
+- Concepts clés
+- Pourquoi ça compte en mission
+- Pièges et nuances
+- Vocabulaire métier
+- Questions probables
+
+## Stack technique
+
+- Vite + React
+- Tailwind CSS
+- Google Gemini API (gemini-2.5-flash-lite)
+- mammoth (extraction DOCX)
+- pdfjs-dist (extraction PDF)
+- jszip (extraction PPTX)
+- xlsx (extraction Excel)
+
+## Installation
+
+```bash
+npm install
+```
+
+## Configuration
+
+Crée un fichier `.env` à la racine :
+
+VITE_GEMINI_API_KEY=ta_clé_api_gemini
+
+## Lancement
+
+```bash
+npm run dev
+```
+
+## Utilisation
+
+1. Glisse un fichier dans la zone de dépôt ou colle du texte
+2. Active "Anonymiser" si le contenu contient des noms propres à masquer
+3. Clique sur "Générer la Knowledge Card"
+4. Copie le Markdown généré pour le stocker dans SharePoint ou ta base RAG

@@ -3,7 +3,7 @@ import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import ScoreBadge from "./ScoreBadge"
 
-function CardDisplay({ markdown, scores }) {
+function CardDisplay({ markdown, body, metadata, scores }) {
   const [copied, setCopied] = useState(false)
 
   async function handleCopy() {
@@ -30,13 +30,46 @@ function CardDisplay({ markdown, scores }) {
           {copied ? "Copié ✓" : "Copier le Markdown"}
         </button>
       </div>
+
+      {metadata && (
+        <div className="mb-4 flex flex-wrap gap-2">
+          {metadata.domaine && (
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+              {metadata.domaine}
+            </span>
+          )}
+          {metadata["sous-domaine"] && (
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+              {metadata["sous-domaine"]}
+            </span>
+          )}
+          {metadata.niveau && (
+            <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-600">
+              {metadata.niveau}
+            </span>
+          )}
+          {metadata.confiance && (
+            <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-600">
+              confiance {metadata.confiance}/5
+            </span>
+          )}
+        </div>
+      )}
+
+      {metadata?.["resume-agent"] && (
+        <div className="mb-4 rounded-lg border border-indigo-100 bg-indigo-50 px-4 py-2 text-sm text-indigo-700">
+          <span className="font-medium">Résumé agent : </span>
+          {metadata["resume-agent"]}
+        </div>
+      )}
+
       <div
         className="prose max-w-none text-[15px] leading-7 text-slate-700
         prose-h2:mb-3 prose-h2:mt-8 prose-h2:border-b prose-h2:border-slate-200 prose-h2:pb-2 prose-h2:text-xl prose-h2:font-bold prose-h2:text-slate-900
         prose-p:my-3 prose-ul:my-4 prose-ol:my-4 prose-li:my-1.5"
       >
         <ReactMarkdown remarkPlugins={[remarkGfm]}>
-          {markdown || "_La card générée apparaîtra ici._"}
+          {body || markdown || "_La card générée apparaîtra ici._"}
         </ReactMarkdown>
       </div>
     </section>

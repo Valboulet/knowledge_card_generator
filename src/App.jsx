@@ -8,13 +8,14 @@ function App() {
   const [result, setResult] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [anonymize, setAnonymize] = useState(false)
 
   async function handleGenerate(nextSourceText) {
     if (!nextSourceText.trim()) return
     setError('')
     setIsLoading(true)
     try {
-      const generated = await generateKnowledgeCard(nextSourceText)
+      const generated = await generateKnowledgeCard(nextSourceText, anonymize)
       setResult(generated)
     } catch (caughtError) {
       const message =
@@ -44,6 +45,8 @@ function App() {
               onSourceTextChange={setSourceText}
               onSubmit={handleGenerate}
               isLoading={isLoading}
+              anonymize={anonymize}
+              onAnonymizeChange={setAnonymize}
             />
             {error ? (
               <p className="mt-3 text-sm text-red-600">{error}</p>
@@ -52,7 +55,12 @@ function App() {
 
           <section className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
             {result ? (
-              <CardDisplay markdown={result.markdown} scores={result.scores} />
+              <CardDisplay
+                markdown={result.markdown}
+                body={result.body}
+                metadata={result.metadata}
+                scores={result.scores}
+              />
             ) : (
               <div className="flex min-h-[360px] flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-slate-300 bg-white px-6 text-center">
                 <svg
