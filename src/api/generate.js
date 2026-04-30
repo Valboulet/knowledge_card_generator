@@ -1,23 +1,56 @@
 import { GoogleGenerativeAI } from "@google/generative-ai"
 import systemPrompt from "../prompts/systemPrompt"
 
+function getDateInMonths(months) {
+  const date = new Date()
+  date.setMonth(date.getMonth() + months)
+  return date.toISOString().split("T")[0]
+}
+
 function parseFrontmatter(text) {
-  const match = text.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/m)
-  if (!match) return { metadata: null, body: text }
+  let cleaned = text.trim()
 
-  const yamlBlock = match[1]
-  const body = match[2].trim()
+  const fenceMatch = cleaned.match(/^```(?:yaml|markdown)?\r?\n([\s\S]*?)\r?\n```\r?\n?([\s\S]*)$/)
+  if (fenceMatch) {
+    const inner = fenceMatch[1].trim()
+    const rest = fenceMatch[2].trim()
+    const yamlMatch = inner.match(/^---\r?\n([\s\S]*?)\r?\n---$/)
+    if (yamlMatch) {
+      return buildMetadata(yamlMatch[1], rest)
+    }
+    return buildMetadata(inner, rest)
+  }
 
+  const dashMatch = cleaned.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/)
+  if (dashMatch) {
+    return buildMetadata(dashMatch[1], dashMatch[2].trim())
+  }
+
+  return { metadata: null, body: cleaned }
+}
+
+function buildMetadata(yamlBlock, body) {
   const metadata = {}
-  yamlBlock.split("\n").forEach(line => {
+  yamlBlock.split(/\r?\n/).forEach(line => {
     const colonIndex = line.indexOf(":")
     if (colonIndex === -1) return
     const key = line.slice(0, colonIndex).trim()
     const value = line.slice(colonIndex + 1).trim()
-    metadata[key] = value
+    if (key) metadata[key] = value
   })
-
   return { metadata, body }
+}
+
+function injectDates(markdownFull) {
+  const today = new Date().toISOString().split("T")[0]
+  const revision = getDateInMonths(6)
+
+  if (markdownFull.includes("date-creation")) return markdownFull
+
+  return markdownFull.replace(
+    /^(---\r?\n[\s\S]*?)(statut:)/m,
+    `$1date-creation: ${today}\ndate-revision: ${revision}\n$2`
+  )
 }
 
 function parseScores(jsonText) {
@@ -55,7 +88,7 @@ const anonymizeInstruction = `
   par leur rôle fonctionnel entre crochets (ex: "[Responsable RH]", "[Chef de projet]", 
   "[Directeur technique]"). Cette règle s'applique à tous les noms de personnes 
   sans exception. Les noms d'outils, de produits et d'entreprises sont conservés.`
-  
+
 export async function generateKnowledgeCard(sourceText, anonymize = false) {
   if (!sourceText || !sourceText.trim()) {
     throw new Error("Le texte source est vide. Fournis un contenu à transformer.")
@@ -68,9 +101,7 @@ export async function generateKnowledgeCard(sourceText, anonymize = false) {
     )
   }
 
-  const finalPrompt = anonymize
-    ? systemPrompt + anonymizeInstruction
-    : systemPrompt
+  const finalPrompt = systemPrompt + (anonymize ? anonymizeInstruction : "")
 
   const client = new GoogleGenerativeAI(apiKey)
   const model = client.getGenerativeModel({
@@ -110,8 +141,9 @@ export async function generateKnowledgeCard(sourceText, anonymize = false) {
   if (!markdownFull) throw new Error("Le Markdown généré est vide.")
   if (!scoreBlock) throw new Error("Le bloc JSON de score est vide.")
 
-  const { metadata, body } = parseFrontmatter(markdownFull)
+  const markdownWithDates = injectDates(markdownFull)
+  const { metadata, body } = parseFrontmatter(markdownWithDates)
   const scores = parseScores(scoreBlock)
 
-  return { markdown: markdownFull, body, metadata, scores }
+  return { markdown: markdownWithDates, body, metadata, scores }
 }

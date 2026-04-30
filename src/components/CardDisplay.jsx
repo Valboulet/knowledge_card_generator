@@ -3,6 +3,27 @@ import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import ScoreBadge from "./ScoreBadge"
 
+function RevisionBadge({ date }) {
+  const today = new Date()
+  const revision = new Date(date)
+  const diffDays = Math.ceil((revision - today) / (1000 * 60 * 60 * 24))
+
+  let className = "rounded-full px-3 py-1 text-xs font-medium "
+  let label = `révision le ${date}`
+
+  if (diffDays < 0) {
+    className += "bg-red-50 text-red-600"
+    label = `⚠ révision dépassée (${date})`
+  } else if (diffDays <= 30) {
+    className += "bg-amber-50 text-amber-600"
+    label = `révision dans ${diffDays}j (${date})`
+  } else {
+    className += "bg-slate-100 text-slate-500"
+  }
+
+  return <span className={className}>{label}</span>
+}
+
 function CardDisplay({ markdown, body, metadata, scores }) {
   const [copied, setCopied] = useState(false)
 
@@ -53,6 +74,14 @@ function CardDisplay({ markdown, body, metadata, scores }) {
               confiance {metadata.confiance}/5
             </span>
           )}
+          {metadata["date-creation"] && (
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-500">
+              créée le {metadata["date-creation"]}
+            </span>
+          )}
+          {metadata["date-revision"] && (
+            <RevisionBadge date={metadata["date-revision"]} />
+          )}
         </div>
       )}
 
@@ -64,7 +93,7 @@ function CardDisplay({ markdown, body, metadata, scores }) {
       )}
 
       <div
-        className="prose max-w-none text-[15px] leading-7 text-slate-700
+        className="prose max-w-none text-[15px] leading-7 text-slate-700 overflow-hidden break-words
         prose-h2:mb-3 prose-h2:mt-8 prose-h2:border-b prose-h2:border-slate-200 prose-h2:pb-2 prose-h2:text-xl prose-h2:font-bold prose-h2:text-slate-900
         prose-p:my-3 prose-ul:my-4 prose-ol:my-4 prose-li:my-1.5"
       >
